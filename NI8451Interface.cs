@@ -6,7 +6,7 @@ namespace PmbusMasterCLI
     /// <summary>
     /// NI-8451 USB-to-I2C/SPI Interface Hardware Wrapper
     /// </summary>
-    public class NI8451Interface : IDisposable
+    public class NI8451Interface : II2CInterface
     {
         private IntPtr _deviceHandle = IntPtr.Zero;
         private IntPtr _i2cConfigHandle = IntPtr.Zero;

@@ -6,15 +6,21 @@ namespace PmbusMasterCLI
     /// </summary>
     public class PMBusProtocol : IDisposable
     {
-        private readonly NI8451Interface _interface;
+        private readonly II2CInterface _interface;
         private byte _currentAddress = 0;
+        private byte _currentPage = 0;
         private int? _voutModeExponent = null;
+        private int _maxRetries = 3;
+        private int _retryDelayMs = 10;
 
         public byte CurrentAddress => _currentAddress;
+        public byte CurrentPage => _currentPage;
+        public int MaxRetries { get => _maxRetries; set => _maxRetries = Math.Max(0, value); }
+        public int RetryDelayMs { get => _retryDelayMs; set => _retryDelayMs = Math.Max(0, value); }
 
-        public PMBusProtocol(NI8451Interface ni8451Interface)
+        public PMBusProtocol(II2CInterface i2cInterface)
         {
-            _interface = ni8451Interface ?? throw new ArgumentNullException(nameof(ni8451Interface));
+            _interface = i2cInterface ?? throw new ArgumentNullException(nameof(i2cInterface));
         }
 
         /// <summary>
@@ -28,6 +34,63 @@ namespace PmbusMasterCLI
             _currentAddress = address;
             _interface.SetSlaveAddress(address);
             _voutModeExponent = null; // Reset cached exponent
+            _currentPage = 0; // Reset page
+        }
+
+        /// <summary>
+        /// Set the current PAGE for multi-rail power supplies
+        /// </summary>
+        public void SetPage(byte page)
+        {
+            WriteByte(PMBusCommands.PAGE, page);
+            _currentPage = page;
+            _voutModeExponent = null; // Reset cached exponent as it may differ per page
+        }
+
+        /// <summary>
+        /// Check if writes are protected
+        /// </summary>
+        /// <returns>Write protection status byte</returns>
+        public byte CheckWriteProtection()
+        {
+            try
+            {
+                return ReadByte(PMBusCommands.WRITE_PROTECT);
+            }
+            catch
+            {
+                // Device may not support WRITE_PROTECT command
+                return 0x00; // Assume not protected
+            }
+        }
+
+        /// <summary>
+        /// Execute an operation with retry logic
+        /// </summary>
+        private T ExecuteWithRetry<T>(Func<T> operation, string operationName)
+        {
+            int attempts = 0;
+            Exception? lastException = null;
+
+            while (attempts <= _maxRetries)
+            {
+                try
+                {
+                    return operation();
+                }
+                catch (Exception ex)
+                {
+                    lastException = ex;
+                    attempts++;
+
+                    if (attempts <= _maxRetries)
+                    {
+                        Thread.Sleep(_retryDelayMs * attempts); // Exponential backoff
+                    }
+                }
+            }
+
+            throw new Exception($"{operationName} failed after {_maxRetries + 1} attempts", lastException);
         }
 
         /// <summary>
@@ -35,7 +98,11 @@ namespace PmbusMasterCLI
         /// </summary>
         public void SendCommand(byte commandCode)
         {
-            _interface.Write(new[] { commandCode });
+            ExecuteWithRetry(() =>
+            {
+                _interface.Write(new[] { commandCode });
+                return true;
+            }, $"SendCommand(0x{commandCode:X2})");
         }
 
         /// <summary>
@@ -43,7 +110,11 @@ namespace PmbusMasterCLI
         /// </summary>
         public void WriteByte(byte commandCode, byte value)
         {
-            _interface.Write(new[] { commandCode, value });
+            ExecuteWithRetry(() =>
+            {
+                _interface.Write(new[] { commandCode, value });
+                return true;
+            }, $"WriteByte(0x{commandCode:X2}, 0x{value:X2})");
         }
 
         /// <summary>
@@ -51,9 +122,13 @@ namespace PmbusMasterCLI
         /// </summary>
         public void WriteWord(byte commandCode, ushort value)
         {
-            byte lowByte = (byte)(value & 0xFF);
-            byte highByte = (byte)((value >> 8) & 0xFF);
-            _interface.Write(new[] { commandCode, lowByte, highByte });
+            ExecuteWithRetry(() =>
+            {
+                byte lowByte = (byte)(value & 0xFF);
+                byte highByte = (byte)((value >> 8) & 0xFF);
+                _interface.Write(new[] { commandCode, lowByte, highByte });
+                return true;
+            }, $"WriteWord(0x{commandCode:X2}, 0x{value:X4})");
         }
 
         /// <summary>
@@ -67,13 +142,17 @@ namespace PmbusMasterCLI
             if (data.Length > 255)
                 throw new ArgumentException("Block write data cannot exceed 255 bytes");
 
-            // PMBus block format: Command + ByteCount + Data
-            byte[] writeData = new byte[data.Length + 2];
-            writeData[0] = commandCode;
-            writeData[1] = (byte)data.Length;
-            Array.Copy(data, 0, writeData, 2, data.Length);
+            ExecuteWithRetry(() =>
+            {
+                // PMBus block format: Command + ByteCount + Data
+                byte[] writeData = new byte[data.Length + 2];
+                writeData[0] = commandCode;
+                writeData[1] = (byte)data.Length;
+                Array.Copy(data, 0, writeData, 2, data.Length);
 
-            _interface.Write(writeData);
+                _interface.Write(writeData);
+                return true;
+            }, $"WriteBlock(0x{commandCode:X2}, {data.Length} bytes)");
         }
 
         /// <summary>
