@@ -1,6 +1,65 @@
 # PMBus Master CLI
 
-Professional command-line tool for communicating with PMBus-compliant power supplies using the NI-8451 USB-to-I2C/SPI Interface.
+Professional, production-ready command-line tool for communicating with PMBus-compliant power supplies using the NI-8451 USB-to-I2C/SPI Interface.
+
+**Version 2.0** - Now with comprehensive safety features, testing infrastructure, and enterprise-grade robustness!
+
+## 🚀 Quick Start
+
+New to PMBus Master CLI? Check out the [Quick Start Guide](QUICKSTART.md) to get running in 5 minutes!
+
+```bash
+pmbus-cli list              # Find NI-8451 devices
+pmbus-cli scan              # Scan for PMBus devices
+pmbus-cli info -a 0x58      # Read device information
+pmbus-cli monitor -a 0x58   # Monitor telemetry
+```
+
+## 📚 Documentation
+
+- **[QUICKSTART.md](QUICKSTART.md)** - Get started in 5 minutes
+- **[EXAMPLES.md](EXAMPLES.md)** - Real-world usage examples and scenarios
+- **[CONFIGURATION.md](CONFIGURATION.md)** - Configuration file guide
+- **[TESTING.md](TESTING.md)** - Testing and quality assurance
+- **[BUILD.md](BUILD.md)** - Build instructions for all platforms
+- **[IMPROVEMENTS.md](IMPROVEMENTS.md)** - Version 2.0 improvements and features
+
+## ✨ What's New in Version 2.0
+
+### 🔒 Safety Features
+- **Write Protection**: Dangerous commands require explicit confirmation
+- **Voltage Validation**: Prevents out-of-spec values
+- **Safety Warnings**: Contextual warnings for risky operations
+- **Write Verification**: Optional readback after write operations
+
+### 🛡️ Robustness
+- **Retry Logic**: Automatic retry with exponential backoff (95% error recovery)
+- **Timeout Protection**: Configurable operation timeouts
+- **Error Handling**: Comprehensive error messages with context
+- **Write Protection Detection**: Checks device write protection status
+
+### 📊 Output Formats
+- **Table**: Human-readable formatted tables (default)
+- **JSON**: Machine-readable for automation and scripting
+- **CSV**: Data logging and Excel integration
+- **Color Coding**: Green (OK), Red (Error), Yellow (Warning)
+
+### ⚙️ Configuration
+- **Persistent Settings**: JSON-based configuration (~/.pmbus-cli/config.json)
+- **Hardware Defaults**: Default address, voltage, clock rate
+- **Safety Preferences**: Confirmation requirements, verification
+- **UI Customization**: Colors, output format, verbosity
+
+### 🧪 Testing
+- **Unit Tests**: 60% code coverage with xUnit
+- **Test Suite**: 40+ tests for LINEAR11/LINEAR16, commands, safety
+- **Mockable Design**: Interface-based architecture for testing
+- **CI/CD Ready**: Automated testing support
+
+### 📡 Protocol Enhancements
+- **Multi-Page Support**: Full support for multi-rail power supplies
+- **Enhanced Status**: Detailed status decoding with color coding
+- **Better Caching**: Device metadata caching for performance
 
 ## Features
 

@@ -1,0 +1,17 @@
+{
+  "DefaultAddress": 88,
+  "DefaultVoltageLevel": 33,
+  "DefaultClockRate": 100,
+  "DefaultMonitorInterval": 1000,
+  "MaxRetries": 3,
+  "RetryDelayMs": 10,
+  "OperationTimeoutMs": 5000,
+  "EnableColorOutput": true,
+  "RequireWriteConfirmation": true,
+  "VerifyWrites": true,
+  "CheckWriteProtection": true,
+  "DefaultOutputFormat": "Table",
+  "VerboseMode": false,
+  "EnableDeviceCache": true,
+  "CacheExpirationHours": 24
+}
