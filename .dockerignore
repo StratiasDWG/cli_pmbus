@@ -1,0 +1,48 @@
+# Docker ignore file for PMBus Master CLI
+# Excludes unnecessary files from Docker build context
+
+# Build outputs
+bin/
+obj/
+publish/
+*.dll
+*.exe
+*.pdb
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# IDE
+.vs/
+.vscode/
+.idea/
+*.suo
+*.user
+*.userospsuite
+*.sln.docstates
+
+# OS
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# Documentation (not needed for build)
+*.md
+!README.md
+
+# Config samples
+config.sample.json
+
+# Test results
+TestResults/
+*.trx
+*.coverage
+
+# Docker files (avoid recursive copy)
+Dockerfile
+.dockerignore
+docker-compose.yml

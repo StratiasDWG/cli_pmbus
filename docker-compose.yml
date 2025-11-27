@@ -1,0 +1,45 @@
+# PMBus Master CLI - Docker Compose Configuration
+# This provides easy commands for building the application using Docker
+
+version: '3.8'
+
+services:
+  # Build service - builds the application and runs tests
+  build:
+    build:
+      context: .
+      target: build
+      dockerfile: Dockerfile
+    image: pmbus-cli-build:latest
+    volumes:
+      # Mount output directory to extract build artifacts
+      - ./bin:/app/publish
+    command: /bin/bash -c "dotnet build PmbusMasterCLI.csproj -c Release && dotnet test PmbusMasterCLI.Tests.csproj -c Release --verbosity normal && dotnet publish PmbusMasterCLI.csproj -c Release -o /app/publish"
+
+  # Runtime service - for running the CLI (requires USB device access)
+  runtime:
+    build:
+      context: .
+      target: runtime
+      dockerfile: Dockerfile
+    image: pmbus-cli:latest
+    devices:
+      # Uncomment and modify if running with USB device access
+      # - /dev/bus/usb:/dev/bus/usb
+    privileged: false
+    stdin_open: true
+    tty: true
+    command: --help
+
+# Usage:
+# Build the application:
+#   docker-compose run --rm build
+#
+# Extract build artifacts (will be in ./bin directory):
+#   docker build --target export -o bin .
+#
+# Run the CLI (help):
+#   docker-compose run --rm runtime --help
+#
+# Run the CLI (with command):
+#   docker-compose run --rm runtime list

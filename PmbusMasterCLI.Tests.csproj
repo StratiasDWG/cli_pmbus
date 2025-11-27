@@ -22,7 +22,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Include="*.cs" Exclude="PmbusMasterCLI.Tests.csproj;Program.cs" />
+    <ProjectReference Include="PmbusMasterCLI.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="Tests\**\*.cs" />
   </ItemGroup>
 
 </Project>
